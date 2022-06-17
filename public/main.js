@@ -1,4 +1,3 @@
-"use strict";
 (self["webpackChunktest_vercel"] = self["webpackChunktest_vercel"] || []).push([["main"],{
 
 /***/ 4206:
@@ -7,16 +6,17 @@
   \***************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
+"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppComponent = void 0;
 const tslib_1 = __webpack_require__(/*! tslib */ 4929);
-const operators_1 = __webpack_require__(/*! rxjs/operators */ 1755);
-const rxjs_1 = __webpack_require__(/*! rxjs */ 6469);
 const myalgo_connect_1 = tslib_1.__importDefault(__webpack_require__(/*! @randlabs/myalgo-connect */ 7672));
+const algosdk_1 = tslib_1.__importDefault(__webpack_require__(/*! algosdk */ 5157));
 const animations_1 = __webpack_require__(/*! @angular/animations */ 1631);
+const environment_1 = __webpack_require__(/*! ./../environments/environment */ 3019);
 const i0 = tslib_1.__importStar(__webpack_require__(/*! @angular/core */ 3184));
-const i1 = tslib_1.__importStar(__webpack_require__(/*! @angular/common/http */ 8784));
+const i1 = tslib_1.__importStar(__webpack_require__(/*! ./services.service */ 359));
 const i2 = tslib_1.__importStar(__webpack_require__(/*! @angular/common */ 6362));
 function AppComponent_div_7_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵelementStart(0, "div");
@@ -27,27 +27,18 @@ function AppComponent_div_7_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵadvance(1);
     i0.ɵɵtextInterpolate1(" ", ctx_r0.error, " ");
 } }
-function AppComponent_div_31_div_1_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "div")(1, "strong");
+function AppComponent_div_31_Template(rf, ctx) { if (rf & 1) {
+    i0.ɵɵelementStart(0, "div", 20)(1, "strong");
     i0.ɵɵtext(2);
     i0.ɵɵelementEnd();
     i0.ɵɵtext(3);
     i0.ɵɵelementEnd();
 } if (rf & 2) {
-    const msg_r3 = i0.ɵɵnextContext().$implicit;
+    const msg_r3 = ctx.$implicit;
     i0.ɵɵadvance(2);
     i0.ɵɵtextInterpolate(msg_r3.info);
     i0.ɵɵadvance(1);
     i0.ɵɵtextInterpolate1(" ", msg_r3.value, " ");
-} }
-function AppComponent_div_31_Template(rf, ctx) { if (rf & 1) {
-    i0.ɵɵelementStart(0, "div", 20);
-    i0.ɵɵtemplate(1, AppComponent_div_31_div_1_Template, 4, 2, "div", 3);
-    i0.ɵɵelementEnd();
-} if (rf & 2) {
-    const msg_r3 = ctx.$implicit;
-    i0.ɵɵadvance(1);
-    i0.ɵɵproperty("ngIf", msg_r3.info != "TxId");
 } }
 function AppComponent_div_32_Template(rf, ctx) { if (rf & 1) {
     i0.ɵɵelementStart(0, "div")(1, "a", 21);
@@ -60,15 +51,19 @@ function AppComponent_div_32_Template(rf, ctx) { if (rf & 1) {
 } }
 const _c0 = function (a0) { return { "disabled": a0 }; };
 class AppComponent {
-    constructor(http) {
-        this.http = http;
+    constructor(services) {
+        this.services = services;
         this.myAlgoConnect = new myalgo_connect_1.default();
+        this.choice = null;
         this.account = null;
         this.error = null;
         this.disableBtns = false;
         this.coinState = 'start';
         this.txId = null;
         this.messages = [];
+        this.algodClient = new algosdk_1.default.Algodv2({
+            'X-API-Key': environment_1.environment.algodClientToken
+        }, environment_1.environment.algodClientUrl, environment_1.environment.algodClientPort);
     }
     connectOrDisconnect() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -78,10 +73,7 @@ class AppComponent {
                     this.account = null;
                 }
                 else {
-                    let accounts = yield this.myAlgoConnect.connect({
-                        shouldSelectOneAccount: true,
-                        openManager: false
-                    });
+                    let accounts = yield this.myAlgoConnect.connect(environment_1.environment.algoConnectSettings);
                     console.log(accounts);
                     this.account = accounts[0];
                 }
@@ -93,36 +85,72 @@ class AppComponent {
     }
     flip(choice) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.error = null;
+            this.txId = null;
+            this.messages = [];
+            this.disableBtns = true;
+            this.coinState = 'start';
+            try {
+                if (!this.account) {
+                    let accounts = yield this.myAlgoConnect.connect(environment_1.environment.algoConnectSettings);
+                    this.account = accounts[0];
+                }
+                let txId = yield this.payGame();
+                this.choice = choice;
+                this.messages.push({ info: 'Choice', value: this.choice });
+                let accountInfo = yield this.algodClient.accountInformation(this.account.address).do();
+                this.messages.push({ info: 'Balance', value: accountInfo.amount });
+                this.coinState = 'head';
+                this.services.flipCoin(choice, txId).subscribe({
+                    next: (result) => {
+                        this.messages = this.messages.concat(result.messages);
+                        this.disableBtns = false;
+                        this.coinState = result.result;
+                        if (this.coinState == this.choice) {
+                            this.messages.push({ info: "You Win 0.2 Algo!", value: "" });
+                            this.txId = result.txId;
+                        }
+                        else {
+                            this.messages.push({ info: "Bla bla... You Loose!", value: "" });
+                        }
+                    },
+                    error: (err) => {
+                        this.error = err;
+                    }
+                });
+            }
+            catch (err) {
+                this.error = err;
+            }
         });
     }
-    handleError(error) {
-        let errorMessage = 'Unknown error!';
-        if (error.error instanceof ErrorEvent) {
-            // Client-side errors
-            errorMessage = `Error: ${error.error.message}`;
-        }
-        else {
-            // Server-side errors
-            errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
-        }
-        console.log(errorMessage);
-        return (0, rxjs_1.throwError)(() => error);
-    }
-    callTest() {
-        this.test().subscribe({
-            next: (result) => {
-                console.log(result);
-            },
-            error: (err) => { }
+    payGame() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            try {
+                const enc = new TextEncoder();
+                let note = enc.encode("Flip Coin Game");
+                const params = yield this.algodClient.getTransactionParams().do();
+                const txn = algosdk_1.default.makePaymentTxnWithSuggestedParamsFromObject({
+                    suggestedParams: Object.assign({}, params),
+                    from: this.account.address,
+                    to: environment_1.environment.recipientAddress,
+                    amount: 100000,
+                    note: note
+                });
+                const signedTxn = yield this.myAlgoConnect.signTransaction(txn.toByte());
+                const response = yield this.algodClient.sendRawTransaction(signedTxn.blob).do();
+                console.log(response);
+                this.messages.push({ info: 'Payed', value: '0.1 Algo' });
+                return response.txId;
+            }
+            catch (err) {
+                throw (err);
+            }
         });
-    }
-    test() {
-        return this.http.get('/api/test')
-            .pipe((0, operators_1.catchError)(this.handleError));
     }
 }
 exports.AppComponent = AppComponent;
-AppComponent.ɵfac = function AppComponent_Factory(t) { return new (t || AppComponent)(i0.ɵɵdirectiveInject(i1.HttpClient)); };
+AppComponent.ɵfac = function AppComponent_Factory(t) { return new (t || AppComponent)(i0.ɵɵdirectiveInject(i1.ServicesService)); };
 AppComponent.ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: AppComponent, selectors: [["app-root"]], decls: 33, vars: 12, consts: [["lang", "en"], ["name", "viewport", "content", "width=device-width, initial-scale=1.0"], [1, "container"], [4, "ngIf"], [1, "row", "subcontainer"], [1, "col", "s6", "truncate"], [1, "col", "s6", "right-align"], [1, "waves-effect", "waves-light", "btn", "indigo", "darken-4", 3, "click"], [1, "col", "m6", "s12"], [1, "row"], [1, "coin"], [1, "heads"], ["src", "assets/head.png"], [1, "tails"], ["src", "assets/tail.png"], [1, "row", "center"], [1, "col", "s6"], [1, "waves-effect", "waves-light", "btn", "indigo", "darken-4", 3, "ngClass", "click"], ["id", "info", 1, "col", "m6", "s12"], ["class", "truncate", 4, "ngFor", "ngForOf"], [1, "truncate"], ["target", "_blank", 3, "href"]], template: function AppComponent_Template(rf, ctx) { if (rf & 1) {
         i0.ɵɵelementStart(0, "html", 0)(1, "head");
         i0.ɵɵelement(2, "meta", 1);
@@ -153,7 +181,7 @@ AppComponent.ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: AppComponent, 
         i0.ɵɵtext(29, " Tail ");
         i0.ɵɵelementEnd()()()();
         i0.ɵɵelementStart(30, "div", 18);
-        i0.ɵɵtemplate(31, AppComponent_div_31_Template, 2, 1, "div", 19);
+        i0.ɵɵtemplate(31, AppComponent_div_31_Template, 4, 2, "div", 19);
         i0.ɵɵtemplate(32, AppComponent_div_32_Template, 3, 1, "div", 3);
         i0.ɵɵelementEnd()()()()();
     } if (rf & 2) {
@@ -194,6 +222,7 @@ AppComponent.ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: AppComponent, 
   \************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
+"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
@@ -220,12 +249,57 @@ AppModule.ɵinj = /*@__PURE__*/ i0.ɵɵdefineInjector({ providers: [], imports: 
 
 /***/ }),
 
+/***/ 359:
+/*!******************************************!*\
+  !*** ./frontend/app/services.service.ts ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ServicesService = void 0;
+const tslib_1 = __webpack_require__(/*! tslib */ 4929);
+const rxjs_1 = __webpack_require__(/*! rxjs */ 6469);
+const i0 = tslib_1.__importStar(__webpack_require__(/*! @angular/core */ 3184));
+const i1 = tslib_1.__importStar(__webpack_require__(/*! @angular/common/http */ 8784));
+class ServicesService {
+    constructor(http) {
+        this.http = http;
+        this.apiPrefix = 'api';
+    }
+    handleError(error) {
+        let errorMessage = 'Unknown error!';
+        if (error.error instanceof ErrorEvent) {
+            // Client-side errors
+            errorMessage = `Error: ${error.error.message}`;
+        }
+        else {
+            // Server-side errors
+            errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+        }
+        console.log(errorMessage);
+        return (0, rxjs_1.throwError)(() => error);
+    }
+    flipCoin(choice, txId) {
+        return this.http.post('/' + this.apiPrefix + '/flip', { choice: choice, txId: txId })
+            .pipe((0, rxjs_1.catchError)(this.handleError));
+    }
+}
+exports.ServicesService = ServicesService;
+ServicesService.ɵfac = function ServicesService_Factory(t) { return new (t || ServicesService)(i0.ɵɵinject(i1.HttpClient)); };
+ServicesService.ɵprov = /*@__PURE__*/ i0.ɵɵdefineInjectable({ token: ServicesService, factory: ServicesService.ɵfac, providedIn: 'root' });
+
+
+/***/ }),
+
 /***/ 3019:
 /*!**********************************************!*\
   !*** ./frontend/environments/environment.ts ***!
   \**********************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
+"use strict";
 
 // This file can be replaced during build by using the `fileReplacements` array.
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
@@ -233,7 +307,15 @@ AppModule.ɵinj = /*@__PURE__*/ i0.ɵɵdefineInjector({ providers: [], imports: 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.environment = void 0;
 exports.environment = {
-    production: false
+    production: false,
+    algodClientUrl: "https://testnet-algorand.api.purestake.io/ps2",
+    algodClientPort: "",
+    algodClientToken: "QWvOEenBjg1mkIsC9dPNZ9q9AsIPTtKXalswRv8u",
+    recipientAddress: "FVQID2AVLW7NRK6P3FLT27356TMQMGS53ONA3RJ25WOBUKRUJXEO2HOGCE",
+    algoConnectSettings: {
+        shouldSelectOneAccount: true,
+        openManager: false
+    }
 };
 /*
  * For easier debugging in development mode, you can import the following file
@@ -253,6 +335,7 @@ exports.environment = {
   \**************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
+"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const tslib_1 = __webpack_require__(/*! tslib */ 4929);
@@ -266,6 +349,16 @@ if (environment_1.environment.production) {
 __NgCli_bootstrap_1.platformBrowser().bootstrapModule(app_module_1.AppModule)
     .catch(err => console.error(err));
 
+
+/***/ }),
+
+/***/ 2921:
+/*!************************!*\
+  !*** crypto (ignored) ***!
+  \************************/
+/***/ (() => {
+
+/* (ignored) */
 
 /***/ })
 

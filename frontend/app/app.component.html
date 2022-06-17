@@ -7,7 +7,7 @@
 </head>
 
 <body>
-  
+
     <div class="container">
         <div *ngIf="error">
             {{ error }}
@@ -51,9 +51,7 @@
             </div>
             <div id="info" class="col m6 s12">
                 <div *ngFor="let msg of messages" class="truncate">
-                    <div *ngIf="msg.info != 'TxId'">
-                        <strong>{{ msg.info }}</strong> {{ msg.value }}
-                    </div>
+                    <strong>{{ msg.info }}</strong> {{ msg.value }}
                 </div>
                 <div *ngIf="txId">
                     <a href="https://testnet.algoexplorer.io/tx/{{txId}}" target="_blank">View on Algo Explorer</a>
