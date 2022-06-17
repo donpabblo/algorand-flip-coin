@@ -38,7 +38,7 @@ export class AppComponent {
   }
   
   test() {
-    return this.http.get<any>('/quotes')
+    return this.http.get<any>('/api/test')
       .pipe(
         catchError(this.handleError)
       );
