@@ -1,1 +1,66 @@
-<a href="#" (click)="callTest()">Test</a>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorand game - Flip A Coin</title>
+</head>
+
+<body>
+  
+    <div class="container">
+        <div *ngIf="error">
+            {{ error }}
+        </div>
+        <div class="row subcontainer">
+            <div class="col s6 truncate">
+                <h6>Addr: {{ (account !== null) ? (account.address) : "None" }}</h6>
+            </div>
+            <div class="col s6 right-align">
+                <a class="waves-effect waves-light btn indigo darken-4" (click)="connectOrDisconnect()">
+                    {{ (account !== null) ? "Disconnect" : "Connect" }}
+                </a>
+            </div>
+        </div>
+        <div class="row subcontainer">
+            <div class="col m6 s12">
+                <div class="row">
+                    <div class="coin" [@rotatedState]='coinState'>
+                        <div class="heads">
+                            <img src="assets/head.png">
+                        </div>
+                        <div class="tails">
+                            <img src="assets/tail.png">
+                        </div>
+                    </div>
+                </div>
+                <div class="row center">
+                    <div class="col s6">
+                        <a class="waves-effect waves-light btn indigo darken-4" [ngClass]="{'disabled': disableBtns}"
+                            (click)="flip('head')">
+                            Head
+                        </a>
+                    </div>
+                    <div class="col s6">
+                        <a class="waves-effect waves-light btn indigo darken-4" [ngClass]="{'disabled': disableBtns}"
+                            (click)="flip('tail')">
+                            Tail
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div id="info" class="col m6 s12">
+                <div *ngFor="let msg of messages" class="truncate">
+                    <div *ngIf="msg.info != 'TxId'">
+                        <strong>{{ msg.info }}</strong> {{ msg.value }}
+                    </div>
+                </div>
+                <div *ngIf="txId">
+                    <a href="https://testnet.algoexplorer.io/tx/{{txId}}" target="_blank">View on Algo Explorer</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
