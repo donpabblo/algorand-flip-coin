@@ -1,8 +1,9 @@
 # How to run the game
-Set an environment variable ==MNEMONIC== with the seed phrase of an existent Algorand Account
-Alternatively, the seed phrase can be setted in the ==config.js== file.
+Set an environment variable `MNEMONIC` with the seed phrase of an existent Algorand Account
+Alternatively, the seed phrase can be setted in the `config.js` file.
 Then:
 ```
+npm i
 npm run build
 npm run start
 ```
