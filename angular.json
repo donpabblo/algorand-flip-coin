@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "test-vercel": {
+    "algorand-flip-coin": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:application": {
@@ -40,7 +40,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumError": "2mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -71,10 +71,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "test-vercel:build:production"
+              "browserTarget": "algorand-flip-coin:build:production"
             },
             "development": {
-              "browserTarget": "test-vercel:build:development"
+              "browserTarget": "algorand-flip-coin:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -82,7 +82,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "test-vercel:build"
+            "browserTarget": "algorand-flip-coin:build"
           }
         },
         "test": {
@@ -108,5 +108,5 @@
       }
     }
   },
-  "defaultProject": "test-vercel"
+  "defaultProject": "algorand-flip-coin"
 }
